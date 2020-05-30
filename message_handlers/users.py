@@ -102,7 +102,7 @@ class GetUsersHandler(MessageBaseHandler):
 
         bot.method('messages.send', {'peer_id': message.chat_id, \
             'message': '{} из {}'.format(str(users[2]), str(users_count)), \
-            
+            'template': template, \
             'random_id': 0})
 
 
