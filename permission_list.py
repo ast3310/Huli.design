@@ -55,4 +55,4 @@ class hasPayload(BasePеrmission):
 class hasForwards(BasePеrmission):
     @staticmethod
     def check(message):
-        return message.hasForwards
+        return message.has_forwards
