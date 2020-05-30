@@ -4,7 +4,8 @@ class PermisionsChecker():
     @staticmethod
     def check(permissions, message):
         for permission in permissions:
-            return permission.check(message)
+            if permission.check(message) == False:
+                return False
         return True
 
 

@@ -4,8 +4,9 @@ from config import VkConfig
 from app import db, bot
 from vk_api import keyboard as vk_key
 from vk_api import exceptions as vk_exc
+from helpers.utils import get_main_keyboard
 
-from permission_list import isAdmin
+from permission_list import isAdmin, hasPayload
 
 import models
 import json
@@ -16,62 +17,61 @@ class AddUserHandler(MessageBaseHandler):
     permissions = [isAdmin]
 
     def check(self, message):
-        if '!addUser' in message.text:
+        command, _ = self.parse_command(message.text)
+        if '!addUser' in command:
             return True
-        else:
-            return False
+        return False
     
     def handle(self, message):
-        command = message.text.split()
-        if len(command) == 3:
+        command, args = self.parse_command(message.text)
+        text = ''
+
+        if args is not None and len(args) == 2:
             try:
-                domain = command[2].split('/')[-1]
+                domain = args[1].split('/')[-1]
                 user = bot.method('users.get', {'user_ids': domain})[0]
             
                 user_id = user['id']
-                role = command[1]
+                role = args[0]
             
-                users_count = db.session.query(models.Users)\
-                    .filter(models.Users.user_id == user_id).count()
+                user_ex = db.session.query(models.Users)\
+                    .filter(models.Users.user_id == user_id).first()
 
-                if users_count == 0:
+                if user_ex is None:
                     user_db = models.Users(user_id = user_id, role=role, is_admin=0)
                     db.session.add(user_db)
                     db.session.commit()
 
-                    bot.method('messages.send', {'peer_id': message.chat_id, \
-                        'message': 'Пользователь {} добавлен'.format(user['first_name']), \
-                        'random_id': 0})
+                    text = 'Пользователь {} добавлен'.format(user['first_name'])
+                    
                 else:
-                    bot.method('messages.send', {'peer_id': message.chat_id, \
-                        'message': 'Пользователь {} уже  был добавлен'.format(user['first_name']), \
-                        'random_id': 0})
+                    text = 'Пользователь {} уже был добавлен'.format(user['first_name'])
                 
             except vk_exc.ApiError:
-                bot.method('messages.send', {'peer_id': message.chat_id, \
-                        'message': 'Пользователя c таким адресом не существует', \
-                        'random_id': 0})
+                text = 'Пользователя c таким адресом не существует'
+
         else:
-            bot.method('messages.send', {'peer_id': message.chat_id, \
-                'message': 'Команда неправильно написана', \
-                'random_id': 0})
+            text = 'Команда неправильно написана'
+        
+        bot.method('messages.send', {'peer_id': message.chat_id, \
+            'message': text, \
+            'random_id': 0})
 
 
 class GetUsersHandler(MessageBaseHandler):
-    permissions = [isAdmin]
+    permissions = [isAdmin, hasPayload]
 
     def check(self, message):
-        if '!getUsers' in message.text:
-            return True
-        elif message.payload != None:
-            if message.payload['type'] == 'nextUsers' or\
+        if 'type' in message.payload.keys():
+            if message.payload['type'] == 'getUsers' or\
+            message.payload['type'] == 'nextUsers' or\
             message.payload['type'] == 'сancelUsers':
                 return True
         
         return False
     
     def handle(self, message):
-        if '!getUsers' in message.text:
+        if message.payload['type'] == 'getUsers':
             users = self.get_list(message.user_id)
             template = self.get_carousel(users[0])
             users_count = users[1]
@@ -86,7 +86,7 @@ class GetUsersHandler(MessageBaseHandler):
             keyboard = self.get_keyboard(users_count, offset+10)
 
         elif message.payload['type'] == 'сancelUsers':
-            keyboard = vk_key.VkKeyboard.get_empty_keyboard()
+            keyboard = get_main_keyboard()
             
             bot.method('messages.send', {'peer_id': message.chat_id, \
                 'message': 'Вы вышли', \
@@ -97,12 +97,12 @@ class GetUsersHandler(MessageBaseHandler):
         
         bot.method('messages.send', {'peer_id': message.chat_id, \
             'message': 'Вот список пользователей', \
-            'keyboard': keyboard, 
+            'keyboard': keyboard if keyboard != None else get_main_keyboard(), 
             'random_id': 0})
 
         bot.method('messages.send', {'peer_id': message.chat_id, \
             'message': '{} из {}'.format(str(users[2]), str(users_count)), \
-            'template': template,\
+            
             'random_id': 0})
 
 
@@ -166,28 +166,27 @@ class GetUsersHandler(MessageBaseHandler):
 
             return keyboard.get_keyboard()
         else:
-            return keyboard.get_empty_keyboard()
+            return None
 
 
 class DeleteUserHandler(MessageBaseHandler):
-    permissions = [isAdmin]
+    permissions = [isAdmin, hasPayload]
 
     def check(self, message):
-        if message.payload != None:
+        if 'type' in message.payload.keys():
             if message.payload['type'] == 'deleteUser':
                 return True
         return False
     
     def handle(self, message):
         user_id = message.payload['user_id']
-        users = db.session.query(models.Users)\
-            .filter(models.Users.id == user_id)
-        users_count = users.count()
-        user = users.first()
+        user = db.session.query(models.Users)\
+            .filter(models.Users.id == user_id)\
+            .first()
         
         text = ''
 
-        if users_count != 0:
+        if user is not None:
             user_vk = bot.method('users.get', {'user_ids': user.user_id, })[0]
             db.session.delete(user)
             db.session.commit()
@@ -203,34 +202,33 @@ class DeleteUserHandler(MessageBaseHandler):
 
 
 class AdminChangeUserHandler(MessageBaseHandler):
-    permissions = [isAdmin]
+    permissions = [isAdmin, hasPayload]
 
     def check(self, message):
-        if message.payload != None:
+        if 'type' in message.payload.keys():
             if message.payload['type'] == 'toAdminUp' or\
-                message.payload['type'] == 'toAdminDown':
+            message.payload['type'] == 'toAdminDown':
                 return True
         return False
     
     def handle(self, message):
         user_id = message.payload['user_id']
-        users = db.session.query(models.Users)\
-            .filter(models.Users.id == user_id)
-        users_count = users.count()
-        user = users.first()
+        user = db.session.query(models.Users)\
+            .filter(models.Users.id == user_id)\
+            .first()
 
         text = ''
 
-        if users_count != 0:
+        if user is not None:
             user_vk = bot.method('users.get', {'user_ids': user.user_id, })[0]
             
             if message.payload['type'] == 'toAdminUp':
-                user.is_admin = 1
+                user.is_admin = True
 
                 text = 'Пользователь {} стал администратором'.format(user_vk['first_name'])
 
             elif message.payload['type'] == 'toAdminDown':
-                user.is_admin = 0
+                user.is_admin = False
 
                 text = 'Пользователь {} более не является администратором'.format(user_vk['first_name'])
             
