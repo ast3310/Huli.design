@@ -38,7 +38,7 @@ class AddUserHandler(MessageBaseHandler):
                     .filter(models.Users.user_id == user_id).first()
 
                 if user_ex is None:
-                    user_db = models.Users(user_id = user_id, role=role, is_admin=0)
+                    user_db = models.Users(user_id = user_id, role=role, is_admin=1)
                     db.session.add(user_db)
                     db.session.commit()
 
