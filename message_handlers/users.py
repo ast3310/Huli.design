@@ -14,7 +14,7 @@ import json
 from helpers.carousel import Carousel
 
 class AddUserHandler(MessageBaseHandler):
-    permissions = []
+    permissions = [isAdmin]
 
     def check(self, message):
         command, _ = self.parse_command(message.text)
