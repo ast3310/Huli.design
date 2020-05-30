@@ -1,5 +1,5 @@
 from app import db, bot
-from permission_list import isCustomer, isAdmin, hasForwards
+from permission_list import isCustomer, isManager, hasForwards
 import models
 from vk_api import exceptions as vk_exc
 from vk_api import keyboard as vk_key
@@ -28,7 +28,7 @@ class NewOrderHandler(MessageBaseHandler):
 
 
 class AddOrderHandler(MessageBaseHandler):
-    permissions = [isAdmin, hasForwards]
+    permissions = [isManager, hasForwards]
 
     def check(self, message):
         command, _ = self.parse_command(message.text)
