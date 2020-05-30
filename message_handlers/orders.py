@@ -7,7 +7,7 @@ from config import VkConfig
 from core.messages_handler import MessageBaseHandler
 
 class NewOrderHandler(MessageBaseHandler):
-    permissions = [isCustomer]
+    permissions = []
 
     def check(self, message):
         if 'market' in message.attachments:
