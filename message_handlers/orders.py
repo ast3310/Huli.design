@@ -14,7 +14,7 @@ class NewOrderHandler(MessageBaseHandler):
 
     def check(self, message):
         if 'market' in message.attachments:
-            if message.attachments['market'][0]['owner_id'] == int(VkConfig.GROUP_ID):
+            if message.attachments['market'][0]['owner_id'] == VkConfig.GROUP_ID:
                 return True
         return False
     
