@@ -44,6 +44,13 @@ class isManager(BasePеrmission):
             return True
 
 
+class isExecutor(BasePеrmission):
+    @staticmethod
+    def check(message):
+        return not isManager.check(message)\
+            and not isCustomer.check(message)
+
+
 class hasPayload(BasePеrmission):
     @staticmethod
     def check(message):
@@ -52,7 +59,8 @@ class hasPayload(BasePеrmission):
         else:
             return True
 
+
 class hasForwards(BasePеrmission):
     @staticmethod
     def check(message):
-        return message.hasForwards
+        return message.has_forwards

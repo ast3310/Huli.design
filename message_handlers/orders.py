@@ -1,13 +1,16 @@
 from app import db, bot
-from permission_list import isCustomer, isAdmin, hasForwards
-import models
+from permission_list import isCustomer, isAdmin, hasForwards, isExecutor, hasPayload
 from vk_api import exceptions as vk_exc
 from vk_api import keyboard as vk_key
 from config import VkConfig
 from core.messages_handler import MessageBaseHandler
 
+import models
+import time
+
 class NewOrderHandler(MessageBaseHandler):
     permissions = [isCustomer]
+
 
     def check(self, message):
         if 'market' in message.attachments:
@@ -15,6 +18,7 @@ class NewOrderHandler(MessageBaseHandler):
                 return True
         return False
     
+
     def handle(self, message):
         bot.method('messages.send', {'peer_id': message.chat_id, 'message': 'Ваш заказ принят, ждите менеджера', 'random_id': 0})
         managers = db.session.query(models.Users)\
@@ -29,6 +33,7 @@ class NewOrderHandler(MessageBaseHandler):
 
 class AddOrderHandler(MessageBaseHandler):
     permissions = [isAdmin, hasForwards]
+
 
     def check(self, message):
         command, _ = self.parse_command(message.text)
@@ -87,6 +92,63 @@ class AddOrderHandler(MessageBaseHandler):
         keyboard.add_button('Взять заказ', \
             vk_key.VkKeyboardColor.POSITIVE,\
             payload = { 'type': 'acceptOrders', 'order_id': order_id},
+        )
+
+        return keyboard.get_keyboard()
+
+
+class AcceptOrderHandler(MessageBaseHandler):
+    permissions = [isExecutor, hasPayload]
+ 
+    def check(self, message):
+        if 'type' in message.payload.keys():
+            if message.payload['type'] == 'acceptOrders':
+                return True
+        return False
+ 
+   
+    def handle(self, message):
+        order_id = message.payload['order_id']
+        order = db.session.query(models.Orders)\
+            .filter(models.Orders.id == order_id)\
+            .first()                    
+
+        keyboard = None
+
+        text = ''
+
+        if order is not None:
+            if order.status == 'searching':
+                order.status = 'in_progress'
+                order.executor_id = message.user_id
+                order.time_start = int(time.time())
+                db.session.commit()
+
+                keyboard = self.get_keyboard(order_id)
+ 
+                text = 'Вы приняли заказ. Для уточнений вы можете обратитьтся к менеджеру'
+            else:
+                text = 'К сожалению, данный заказ уже выполняется'
+        else:
+            text = 'Произошла ошибка'
+       
+        bot.method('messages.send', {'peer_id': message.chat_id, \
+            'message': text, \
+            'keyboard': keyboard if keyboard != None else vk_key.VkKeyboard.get_empty_keyboard(),\
+            'random_id': 0})
+ 
+ 
+    def get_keyboard(self, order_id):
+        keyboard = vk_key.VkKeyboard()
+
+        keyboard.add_button('Закончить', \
+            vk_key.VkKeyboardColor.POSITIVE,\
+            payload = { 'type': 'finishOrders', 'order_id': order_id},
+        )
+        
+        keyboard.add_button('Отказаться', \
+            vk_key.VkKeyboardColor.NEGATIVE,\
+            payload = { 'type': 'сancelOrders', 'order_id': order_id},
         )
 
         return keyboard.get_keyboard()

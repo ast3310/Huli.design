@@ -6,15 +6,9 @@ COMMANDS_LIST = (
     start.StartAdminHandler(),
     orders.NewOrderHandler(),
     orders.AddOrderHandler(),
+    orders.AcceptOrderHandler(),
     users.AddUserHandler(),
     users.GetUsersHandler(),
     users.DeleteUserHandler(),
     users.AdminChangeUserHandler(),
-)
-
-PERMISSIONS_LIST = (
-    permission_list.isAdmin,
-    permission_list.isCustomer,
-    permission_list.isManager,
-    permission_list.hasPayload,
 )
