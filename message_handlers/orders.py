@@ -1,5 +1,5 @@
 from app import db, bot
-from permission_list import isCustomer, isAdmin, hasForwards, isExecutor, hasPayload
+from permission_list import isCustomer, hasForwards, isExecutor, hasPayload
 from vk_api import exceptions as vk_exc
 from vk_api import keyboard as vk_key
 from config import VkConfig
@@ -14,7 +14,7 @@ class NewOrderHandler(MessageBaseHandler):
 
     def check(self, message):
         if 'market' in message.attachments:
-            if message.attachments['market'][0]['owner_id'] == VkConfig.GROUP_ID:
+            if message.attachments['market'][0]['owner_id'] == int(VkConfig.GROUP_ID):
                 return True
         return False
     
@@ -32,7 +32,7 @@ class NewOrderHandler(MessageBaseHandler):
 
 
 class AddOrderHandler(MessageBaseHandler):
-    permissions = [isAdmin, hasForwards]
+    permissions = [isManager, hasForwards]
 
 
     def check(self, message):
