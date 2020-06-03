@@ -12,4 +12,4 @@ class BaseConfig:
 class VkConfig:
     TOKEN = os.environ.get('TOKEN')
     RETURN_STR = os.environ.get('RETURN_STR')
-    GROUP_ID = os.environ.get('GROUP_ID')
+    GROUP_ID = int(os.environ.get('GROUP_ID'))
