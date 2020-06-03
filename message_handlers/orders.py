@@ -11,7 +11,7 @@ import time
 class NewOrderHandler(MessageBaseHandler):
     permissions = [isCustomer]
 
-
+    
     def check(self, message):
         if 'market' in message.attachments:
             if message.attachments['market'][0]['owner_id'] == VkConfig.GROUP_ID:
