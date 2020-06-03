@@ -1,5 +1,5 @@
 from app import db, bot
-from permission_list import isCustomer, hasForwards, isExecutor, hasPayload
+from permission_list import isCustomer, isManager, hasForwards, isExecutor, hasPayload
 from vk_api import exceptions as vk_exc
 from vk_api import keyboard as vk_key
 from config import VkConfig
