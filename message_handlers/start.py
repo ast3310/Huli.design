@@ -7,6 +7,7 @@ import models
 from config import VkConfig
 from core.messages_handler import MessageBaseHandler
 
+
 class StartHandler(MessageBaseHandler):
     permissions = [hasPayload, isCustomer]
 
