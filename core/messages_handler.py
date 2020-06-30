@@ -3,7 +3,6 @@ class MessageBaseHandler():
     def check(self, message):
         pass
 
-
     def handle(self, message):
         pass
     
