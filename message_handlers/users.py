@@ -17,7 +17,6 @@ from helpers.carousel import Carousel
 class AddUserHandler(MessageBaseHandler):
     permissions = [isAdmin]
 
-
     def check(self, message):
         command, _ = self.parse_command(message.text)
         if '!addUser' in command:
@@ -62,7 +61,6 @@ class AddUserHandler(MessageBaseHandler):
 
 class GetUsersHandler(MessageBaseHandler):
     permissions = [isAdmin, hasPayload]
-
 
     def check(self, message):
         if 'type' in message.payload.keys():
@@ -120,7 +118,6 @@ class GetUsersHandler(MessageBaseHandler):
         
         return (users, users_count, users.count())
     
-
     def get_carousel(self, users):
         carousel = Carousel()
 
@@ -154,7 +151,6 @@ class GetUsersHandler(MessageBaseHandler):
 
         return carousel.get_json()
     
-
     def get_keyboard(self, users_count, offset):
         keyboard = vk_key.VkKeyboard()
 
@@ -177,13 +173,11 @@ class GetUsersHandler(MessageBaseHandler):
 class DeleteUserHandler(MessageBaseHandler):
     permissions = [isAdmin, hasPayload]
 
-
     def check(self, message):
         if 'type' in message.payload.keys():
             if message.payload['type'] == 'deleteUser':
                 return True
         return False
-    
 
     def handle(self, message):
         user_id = message.payload['user_id']
@@ -211,7 +205,6 @@ class DeleteUserHandler(MessageBaseHandler):
 class AdminChangeUserHandler(MessageBaseHandler):
     permissions = [isAdmin, hasPayload]
 
-
     def check(self, message):
         if 'type' in message.payload.keys():
             if message.payload['type'] == 'toAdminUp' or\
@@ -219,7 +212,6 @@ class AdminChangeUserHandler(MessageBaseHandler):
                 return True
         return False
     
-
     def handle(self, message):
         user_id = message.payload['user_id']
         user = db.session.query(models.Users)\
@@ -248,4 +240,3 @@ class AdminChangeUserHandler(MessageBaseHandler):
         bot.method('messages.send', {'peer_id': message.chat_id, \
             'message': text, \
             'random_id': 0})
-        
