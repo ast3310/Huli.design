@@ -14,6 +14,4 @@ class MessageRecognition():
             if  PermisionsChecker.check(message_handler.permissions, message)\
                 and message_handler.check(message):
                 message_handler.handle(message)
-                return
-        
-        return None
+                break
